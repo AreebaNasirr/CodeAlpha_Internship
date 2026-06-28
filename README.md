@@ -44,10 +44,10 @@ A menu-driven banking application developed using Object-Oriented Programming.
 
 ## Repository Structure
 CodeAlpha_Internship/
-│── README.md
-│── CGPA Calculator.cpp
-│── User Registration System.cpp
-│── Banking System.cpp
+│── README.md   
+│── CGPA Calculator.cpp     
+│── User Registration System.cpp     
+│── Banking System.cpp    
 
 ##  Internship
 
