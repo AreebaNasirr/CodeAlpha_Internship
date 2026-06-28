@@ -1,0 +1,409 @@
+#include <iostream>
+#include <fstream>
+#include <string>
+using namespace std;
+class Customer
+{
+protected:
+    int customerID;
+    string name;
+
+public:
+    void createCustomer()
+    {
+        cout << "Enter Customer ID: ";
+        cin >> customerID;
+        cin.ignore();
+        cout << "Enter Customer Name: ";
+        getline(cin, name);
+    }
+    int getID()
+    {
+        return customerID;
+    }
+    string getName()
+    {
+        return name;
+    }
+};
+
+class Account : public Customer
+{
+private:
+    int accountNumber;
+    double balance;
+
+public:
+    void createAccount();
+    void deposit();
+    void withdraw();
+    void transfer();
+    void balanceInquiry();
+    void saveAccount();
+    bool searchAccount(int);
+    void updateAccount();
+};
+
+class Transaction
+{
+public:
+    void saveTransaction(int accountNo, string type, double amount)
+    {
+        ofstream file("transactions.txt", ios::app);
+        file << accountNo << " "
+            << type << " "
+            << amount << endl;
+
+        file.close();
+    }
+
+    void showHistory(int accountNo)
+    {
+        ifstream file("transactions.txt");
+
+        int acc;
+        string type;
+        double amount;
+
+        bool found = false;
+
+        cout << "\nTransaction History\n";
+        cout << "--------------------------\n";
+
+        while (file >> acc >> type >> amount)
+        {
+            if (acc == accountNo)
+            {
+                cout << type << " : " << amount << endl;
+                found = true;
+            }
+        }
+
+        if (!found)
+            cout << "No Transactions Found.\n";
+
+        file.close();
+    }
+};
+
+void Account::createAccount()
+{
+    createCustomer();
+
+    cout << "Enter Account Number: ";
+    cin >> accountNumber;
+
+    cout << "Enter Initial Balance: ";
+    cin >> balance;
+
+    saveAccount();
+}
+
+void Account::saveAccount()
+{
+    ofstream file("accounts.txt", ios::app);
+
+    file << customerID << endl;
+    file << name << endl;
+    file << accountNumber << endl;
+    file << balance << endl;
+
+    file.close();
+
+    cout << "\nAccount Created Successfully.\n";
+}
+
+bool Account::searchAccount(int acc)
+{
+    ifstream file("accounts.txt");
+
+    bool found = false;
+
+    while (file >> customerID)
+    {
+        file.ignore();
+
+        getline(file, name);
+
+        file >> accountNumber;
+        file >> balance;
+
+        if (accountNumber == acc)
+        {
+            found = true;
+            break;
+        }
+    }
+
+    file.close();
+
+    return found;
+}
+
+void Account::updateAccount()
+{
+    ifstream file("accounts.txt");
+    ofstream temp("temp.txt");
+
+    while (file >> customerID)
+    {
+        file.ignore();
+
+        getline(file, name);
+
+        int acc;
+        double bal;
+
+        file >> acc;
+        file >> bal;
+
+        if (acc == accountNumber)
+        {
+            temp << customerID << endl;
+            temp << name << endl;
+            temp << accountNumber << endl;
+            temp << balance << endl;
+        }
+        else
+        {
+            temp << customerID << endl;
+            temp << name << endl;
+            temp << acc << endl;
+            temp << bal << endl;
+        }
+    }
+
+    file.close();
+    temp.close();
+
+    remove("accounts.txt");
+    rename("temp.txt", "accounts.txt");
+}
+
+void Account::deposit()
+{
+    int acc;
+    double amount;
+
+    cout << "Enter Account Number: ";
+    cin >> acc;
+
+    if (!searchAccount(acc))
+    {
+        cout << "Account Not Found.\n";
+        return;
+    }
+
+    cout << "Enter Deposit Amount: ";
+    cin >> amount;
+
+    balance += amount;
+
+    updateAccount();
+
+    Transaction t;
+    t.saveTransaction(accountNumber, "Deposit", amount);
+
+    cout << "Deposit Successful.\n";
+}
+
+void Account::withdraw()
+{
+    int acc;
+    double amount;
+
+    cout << "Enter Account Number: ";
+    cin >> acc;
+
+    if (!searchAccount(acc))
+    {
+        cout << "Account Not Found.\n";
+        return;
+    }
+
+    cout << "Enter Withdraw Amount: ";
+    cin >> amount;
+
+    if (amount > balance)
+    {
+        cout << "Insufficient Balance.\n";
+        return;
+    }
+
+    balance -= amount;
+
+    updateAccount();
+
+    Transaction t;
+    t.saveTransaction(accountNumber, "Withdraw", amount);
+
+    cout << "Withdrawal Successful.\n";
+}
+void Account::transfer()
+{
+    int senderAcc, receiverAcc;
+    double amount;
+
+    cout << "Enter Your Account Number: ";
+    cin >> senderAcc;
+
+    if (!searchAccount(senderAcc))
+    {
+        cout << "Sender Account Not Found.\n";
+        return;
+    }
+
+    double senderBalance = balance;
+    int senderID = customerID;
+    string senderName = name;
+
+    cout << "Enter Receiver Account Number: ";
+    cin >> receiverAcc;
+
+    if (senderAcc == receiverAcc)
+    {
+        cout << "Cannot Transfer To Same Account.\n";
+        return;
+    }
+
+    if (!searchAccount(receiverAcc))
+    {
+        cout << "Receiver Account Not Found.\n";
+        return;
+    }
+
+    double receiverBalance = balance;
+    int receiverID = customerID;
+    string receiverName = name;
+
+    cout << "Enter Amount: ";
+    cin >> amount;
+
+    if (amount > senderBalance)
+    {
+        cout << "Insufficient Balance.\n";
+        return;
+    }
+
+    senderBalance -= amount;
+    receiverBalance += amount;
+
+    ifstream file("accounts.txt");
+    ofstream temp("temp.txt");
+
+    int id, acc;
+    string n;
+    double bal;
+
+    while (file >> id)
+    {
+        file.ignore();
+        getline(file, n);
+        file >> acc;
+        file >> bal;
+
+        if (acc == senderAcc)
+            bal = senderBalance;
+        else if (acc == receiverAcc)
+            bal = receiverBalance;
+
+        temp << id << endl;
+        temp << n << endl;
+        temp << acc << endl;
+        temp << bal << endl;
+    }
+
+    file.close();
+    temp.close();
+
+    remove("accounts.txt");
+    rename("temp.txt", "accounts.txt");
+
+    Transaction t;
+    t.saveTransaction(senderAcc, "Transfer", amount);
+    t.saveTransaction(receiverAcc, "Received", amount);
+
+    cout << "Transfer Successful.\n";
+}
+
+void Account::balanceInquiry()
+{
+    int acc;
+
+    cout << "Enter Account Number: ";
+    cin >> acc;
+
+    if (searchAccount(acc))
+    {
+        cout << "\nCustomer ID : " << customerID << endl;
+        cout << "Customer Name : " << name << endl;
+        cout << "Account Number : " << accountNumber << endl;
+        cout << "Current Balance : " << balance << endl;
+    }
+    else
+    {
+        cout << "Account Not Found.\n";
+    }
+}
+
+int main()
+{
+    Account account;
+    Transaction transaction;
+
+    int choice;
+    int acc;
+
+    do
+    {
+        cout << "\n BANKING SYSTEM \n";
+        cout << "1. Create Account\n";
+        cout << "2. Deposit\n";
+        cout << "3. Withdraw\n";
+        cout << "4. Transfer Money\n";
+        cout << "5. Balance Inquiry\n";
+        cout << "6. Transaction History\n";
+        cout << "7. Exit\n";
+        cout << "Enter Choice: ";
+        cin >> choice;
+
+        switch (choice)
+        {
+        case 1:
+            account.createAccount();
+            break;
+
+        case 2:
+            account.deposit();
+            break;
+
+        case 3:
+            account.withdraw();
+            break;
+
+        case 4:
+            account.transfer();
+            break;
+
+        case 5:
+            account.balanceInquiry();
+            break;
+
+        case 6:
+            cout << "Enter Account Number: ";
+            cin >> acc;
+            transaction.showHistory(acc);
+            break;
+
+        case 7:
+            cout << "Thank You For Using Banking System.\n";
+            break;
+
+        default:
+            cout << "Invalid Choice.\n";
+        }
+
+    } while (choice != 7);
+
+    return 0;
+}
