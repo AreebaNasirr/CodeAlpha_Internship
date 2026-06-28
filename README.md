@@ -43,7 +43,7 @@ A menu-driven banking application developed using Object-Oriented Programming.
 - Standard Template Library (STL)
 
 ## Repository Structure
-CodeAlpha_Internship/
+CodeAlpha_Internship/      
 │── README.md   
 │── CGPA Calculator.cpp     
 │── User Registration System.cpp     
